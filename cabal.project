@@ -1,0 +1,29 @@
+index-state: 2020-10-23T00:00:00Z
+
+packages:
+    ./*.cabal
+
+allow-newer: base
+
+-- related to cardano-ledger-specs:
+-- always write GHC env files, because they are needed by the doctests.
+write-ghc-environment-files: always
+
+-- ---------------------------------------------------------
+-- Disable all tests by default
+
+tests: False
+
+test-show-details: direct
+
+-- Then enable specific tests in this repo
+
+package ekg-forward
+  tests: True
+
+-- required for nix:
+
+package ouroboros-network
+  tests: False
+
+---------- 8< -----------
