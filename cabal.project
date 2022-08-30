@@ -51,16 +51,31 @@ source-repository-package
 
 source-repository-package
   type: git
-  location: https://github.com/input-output-hk/ouroboros-network
-  tag: 94782e5ca52f234ff8eeddc6322a46cca0b69c0e
-  --sha256: 1da3pka4pn6sjf6w19d957aryjc9ip1a3g0vz7jz66pjri3v2n0j
+  location: https://github.com/input-output-hk/io-sim
+  tag: f4183f274d88d0ad15817c7052df3a6a8b40e6dc
+  --sha256: 0vb2pd9hl89v2y5hrhrsm69yx0jf98vppjmfncj2fraxr3p3lldw
   subdir:
-    io-sim
     io-classes
+    io-sim
+    strict-stm
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/typed-protocols
+  tag: 181601bc3d9e9d21a671ce01e0b481348b3ca104
+  --sha256: 1lr97b2z7l0rpsmmz92rsv27qzd5vavz10cf7n25svya4kkiysp5
+  subdir:
+    typed-protocols
+    typed-protocols-cborg
+    typed-protocols-examples
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/ouroboros-network
+  tag: a0e1c2ba64ad479fdd8e0d50d81afa753d76cd00
+  --sha256: 0anp62n8lcbvykpvx9q4gwr63hvndz1z1lcg3i18cvlfihq87bhi
+  subdir:
     monoidal-synchronisation
     network-mux
     ouroboros-network-framework
     ouroboros-network-testing
-    typed-protocols
-    typed-protocols-cborg
-    typed-protocols-examples
