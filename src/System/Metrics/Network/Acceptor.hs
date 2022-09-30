@@ -79,7 +79,6 @@ doListenToForwarder snocket address timeLimits app = do
   _ <- async $ cleanNetworkMutableState networkState
   withServerNode
     snocket
-    mempty
     nullNetworkServerTracers
     networkState
     (AcceptedConnectionsLimit maxBound maxBound 0)
@@ -94,7 +93,6 @@ doListenToForwarder snocket address timeLimits app = do
       (SomeResponderApplication app))
     nullErrorPolicies
     $ \_ serverAsync -> wait serverAsync -- Block until async exception.
-
 
 acceptorApp
   :: AcceptorConfiguration

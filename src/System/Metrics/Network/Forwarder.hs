@@ -68,7 +68,6 @@ doConnectToAcceptor
 doConnectToAcceptor snocket address timeLimits app =
   connectToNode
     snocket
-    mempty
     unversionedHandshakeCodec
     timeLimits
     unversionedProtocolDataCodec
