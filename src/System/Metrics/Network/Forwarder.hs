@@ -1,15 +1,19 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module System.Metrics.Network.Forwarder
   ( connectToAcceptor
     -- | Export this function for Mux purpose.
   , forwardEKGMetrics
+  , forwardEKGMetricsDummy
   , forwardEKGMetricsResp
+  , forwardEKGMetricsRespDummy
   ) where
 
 import           Codec.CBOR.Term (Term)
 import qualified Codec.Serialise as CBOR
+import           "contra-tracer" Control.Tracer (nullTracer)
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
 import           Data.Void (Void)
@@ -34,7 +38,7 @@ import           Ouroboros.Network.Socket (connectToNode, nullNetworkConnectTrac
 import qualified System.Metrics as EKG
 
 import           System.Metrics.Configuration (ForwarderConfiguration (..), HowToConnect (..))
-import           System.Metrics.Store.Forwarder (mkResponse)
+import           System.Metrics.Store.Forwarder (mkResponse, mkResponseDummy)
 import qualified System.Metrics.Protocol.Forwarder as Forwarder
 import qualified System.Metrics.Protocol.Codec as Forwarder
 
@@ -113,3 +117,23 @@ forwardEKGMetricsResp config ekgStore =
       (Forwarder.codecEKGForward CBOR.encode CBOR.decode
                                  CBOR.encode CBOR.decode)
       (Forwarder.ekgForwarderPeer $ mkResponse config ekgStore)
+
+forwardEKGMetricsDummy
+  :: RunMiniProtocol 'InitiatorMode LBS.ByteString IO () Void
+forwardEKGMetricsDummy =
+  InitiatorProtocolOnly $
+    MuxPeer
+      nullTracer
+      (Forwarder.codecEKGForward CBOR.encode CBOR.decode
+                                 CBOR.encode CBOR.decode)
+      (Forwarder.ekgForwarderPeer mkResponseDummy)
+
+forwardEKGMetricsRespDummy
+  :: RunMiniProtocol 'ResponderMode LBS.ByteString IO Void ()
+forwardEKGMetricsRespDummy =
+  ResponderProtocolOnly $
+    MuxPeer
+      nullTracer
+      (Forwarder.codecEKGForward CBOR.encode CBOR.decode
+                                 CBOR.encode CBOR.decode)
+      (Forwarder.ekgForwarderPeer mkResponseDummy)

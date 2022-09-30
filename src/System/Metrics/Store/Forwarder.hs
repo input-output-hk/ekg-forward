@@ -3,6 +3,7 @@
 
 module System.Metrics.Store.Forwarder
   ( mkResponse
+  , mkResponseDummy
   ) where
 
 import qualified Data.HashMap.Strict as HM
@@ -61,3 +62,11 @@ filterMetricsWeNeed mNames (mName, ekgValue) =
  where
   onlyIfNeeded value =
     if mName `elem` mNames then Just (mName, value) else Nothing
+
+mkResponseDummy
+  :: Forwarder.EKGForwarder Request Response IO ()
+mkResponseDummy =
+  Forwarder.EKGForwarder
+    { Forwarder.recvMsgReq  = const $ return (ResponseMetrics [], mkResponseDummy)
+    , Forwarder.recvMsgDone = return ()
+    }
