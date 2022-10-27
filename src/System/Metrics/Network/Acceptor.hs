@@ -60,25 +60,30 @@ listenToForwarder config mkStores peerErrorHandler = withIOManager $ \iocp -> do
     LocalPipe localPipe -> do
       let snocket = localSnocket iocp
           address = localAddressFromPath localPipe
-      doListenToForwarder snocket address noTimeLimitsHandshake app
+          configureSocket = mempty
+      doListenToForwarder snocket configureSocket address noTimeLimitsHandshake app
     RemoteSocket host port -> do
       listenAddress:_ <- Socket.getAddrInfo Nothing (Just $ T.unpack host) (Just $ show port)
       let snocket = socketSnocket iocp
           address = Socket.addrAddress listenAddress
-      doListenToForwarder snocket address timeLimitsHandshake app
+          configureSocket fd _addr =
+            Socket.setSocketOption fd Socket.ReuseAddr 1
+      doListenToForwarder snocket configureSocket address timeLimitsHandshake app
 
 doListenToForwarder
   :: Ord addr
   => Snocket IO fd addr
+  -> (fd -> addr -> IO ()) -- ^ configure socket
   -> addr
   -> ProtocolTimeLimits (Handshake UnversionedProtocol Term)
   -> OuroborosApplication 'ResponderMode addr LBS.ByteString IO Void ()
   -> IO Void
-doListenToForwarder snocket address timeLimits app = do
+doListenToForwarder snocket configureSocket address timeLimits app = do
   networkState <- newNetworkMutableState
   _ <- async $ cleanNetworkMutableState networkState
   withServerNode
     snocket
+    configureSocket
     nullNetworkServerTracers
     networkState
     (AcceptedConnectionsLimit maxBound maxBound 0)
