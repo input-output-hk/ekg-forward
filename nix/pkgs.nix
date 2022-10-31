@@ -1,3 +1,4 @@
+{ sources }:
 # our packages overlay
 pkgs: _: with pkgs; {
   ekgForwardHaskellPackages = import ./haskell.nix {
@@ -8,5 +9,6 @@ pkgs: _: with pkgs; {
       haskell-nix
       buildPackages
       ;
+    inherit (sources) CHaP;
   };
 }

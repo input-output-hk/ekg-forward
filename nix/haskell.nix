@@ -6,9 +6,10 @@
 , stdenv
 , haskell-nix
 , buildPackages
+, CHaP
 , config ? {}
 # GHC attribute name
-, compiler ? config.haskellNix.compiler or "ghc8104"
+, compiler ? config.haskellNix.compiler or "ghc8107"
 # Enable profiling
 , profiling ? config.haskellNix.profiling or false
 # Enable asserts for given packages
@@ -27,7 +28,7 @@ let
   projectPackages = lib.attrNames (haskell-nix.haskellLib.selectProjectPackages
     (haskell-nix.cabalProject {
       inherit src;
-      compiler-nix-name = "ghc8104";
+      compiler-nix-name = "ghc8107";
     }));
 
   # This creates the Haskell package set.
@@ -39,32 +40,9 @@ let
   } // {
     inherit src;
     compiler-nix-name = compiler;
+    inputMap = { "https://input-output-hk.github.io/cardano-haskell-packages" = CHaP; };
     modules = [
       { compiler.nix-name = compiler; }
-      # Allow reinstallation of Win32
-      { nonReinstallablePkgs =
-        [ "rts" "ghc-heap" "ghc-prim" "integer-gmp" "integer-simple" "base"
-          "deepseq" "array" "ghc-boot-th" "pretty" "template-haskell"
-          # ghcjs custom packages
-          "ghcjs-prim" "ghcjs-th"
-          "ghc-boot"
-          "ghc" "array" "binary" "bytestring" "containers"
-          "filepath" "ghc-boot" "ghc-compact" "ghc-prim"
-          # "ghci" "haskeline"
-          "hpc"
-          "mtl" "parsec" "text" "transformers"
-          "xhtml"
-          # "stm" "terminfo"
-        ];
-
-
-      }
-      {
-        # Packages we wish to ignore version bounds of.
-        # This is similar to jailbreakCabal, however it
-        # does not require any messing with cabal files.
-        packages.katip.doExactConfig = true;
-      }
       # TODO: Compile all local packages with -Werror:
       { packages.ekg-forward.configureFlags = [
           "--ghc-option=-Wall"
