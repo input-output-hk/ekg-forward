@@ -52,22 +52,24 @@ connectToAcceptor config@ForwarderConfiguration{..} ekgStore = withIOManager $ \
     LocalPipe localPipe -> do
       let snocket = localSnocket iocp
           address = localAddressFromPath localPipe
-      doConnectToAcceptor snocket address noTimeLimitsHandshake app
+      doConnectToAcceptor snocket mempty address noTimeLimitsHandshake app
     RemoteSocket host port -> do
       acceptorAddr:_ <- Socket.getAddrInfo Nothing (Just $ T.unpack host) (Just $ show port)
       let snocket = socketSnocket iocp
           address = Socket.addrAddress acceptorAddr
-      doConnectToAcceptor snocket address timeLimitsHandshake app
+      doConnectToAcceptor snocket mempty address timeLimitsHandshake app
 
 doConnectToAcceptor
   :: Snocket IO fd addr
+  -> (fd -> IO ()) -- ^ configure socket
   -> addr
   -> ProtocolTimeLimits (Handshake UnversionedProtocol Term)
   -> OuroborosApplication 'InitiatorMode addr LBS.ByteString IO () Void
   -> IO ()
-doConnectToAcceptor snocket address timeLimits app =
+doConnectToAcceptor snocket configureSocket address timeLimits app =
   connectToNode
     snocket
+    configureSocket
     unversionedHandshakeCodec
     timeLimits
     unversionedProtocolDataCodec
