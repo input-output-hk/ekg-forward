@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         ghc:
-          - "8.10.4"
+          - "8.10.7"
 
     steps:
     - uses: actions/checkout@v2
@@ -40,8 +40,8 @@ jobs:
 
     - name: Build
       run: |
-        cabal build --enable-tests --enable-benchmarks
+        cabal build 
 
     - name: Test
       run: |
-        cabal test --enable-tests
+        cabal test 

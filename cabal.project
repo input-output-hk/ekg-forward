@@ -1,4 +1,5 @@
--- Custom repository for cardano haskell packages, see CONTRIBUTING for more
+-- Custom repository for cardano haskell packages, see 
+-- ouroboros-network/CONTRIBUTING for more
 repository cardano-haskell-packages
   url: https://input-output-hk.github.io/cardano-haskell-packages
   secure: True
@@ -10,31 +11,16 @@ repository cardano-haskell-packages
     c00aae8461a256275598500ea0e187588c35a5d5d7454fb57eac18d9edb86a56
     d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
 
-index-state: 2022-10-31T09:07:19Z
-index-state: cardano-haskell-packages 2022-11-10T12:17:44Z
+-- See ouroboros-network/CONTRIBUTING for some Nix commands you will need 
+-- to run if you update either of these.
+-- Bump this if you need newer packages from Hackage
+index-state: 2022-10-31T00:00:00Z
+-- Bump this if you need newer packages from CHaP
+index-state: cardano-haskell-packages 2022-11-11T00:00:00Z
 
-packages:
-    ./*.cabal
-
-allow-newer: base
-
--- related to cardano-ledger-specs:
--- always write GHC env files, because they are needed by the doctests.
-write-ghc-environment-files: always
-
--- ---------------------------------------------------------
--- Disable all tests by default
-
-tests: False
+packages: ./.
 
 test-show-details: direct
 
--- Then enable specific tests in this repo
-
-package ekg-forward
-  tests: True
-
--- required for nix:
-
-package ouroboros-network
-  tests: False
+tests: True
+benchmarks: True
