@@ -62,14 +62,14 @@ library
                        , cborg
                        , contra-tracer
                        , ekg-core
-                       , io-classes
+                       , io-classes >= 0.3
                        , network
-                       , ouroboros-network-framework
+                       , ouroboros-network-framework >= 0.2
                        , serialise
                        , stm
                        , text
                        , time
-                       , typed-protocols
+                       , typed-protocols ^>= 0.1
                        , typed-protocols-cborg
                        , unordered-containers
 
