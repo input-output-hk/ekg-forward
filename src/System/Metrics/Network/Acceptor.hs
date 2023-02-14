@@ -28,7 +28,9 @@ import           Ouroboros.Network.Mux (MiniProtocol (..), MiniProtocolLimits (.
                                         OuroborosApplication (..), MuxPeer (..),
                                         RunMiniProtocol (..),
                                         miniProtocolLimits, miniProtocolNum, miniProtocolRun)
-import           Ouroboros.Network.Snocket (Snocket, localAddressFromPath, localSnocket, socketSnocket)
+import           Ouroboros.Network.Snocket (MakeBearer, Snocket,
+                                            localAddressFromPath, localSnocket, socketSnocket,
+                                            makeLocalBearer, makeSocketBearer)
 import           Ouroboros.Network.Socket (AcceptedConnectionsLimit (..),
                                            SomeResponderApplication (..),
                                            cleanNetworkMutableState, newNetworkMutableState,
@@ -61,28 +63,30 @@ listenToForwarder config mkStores peerErrorHandler = withIOManager $ \iocp -> do
       let snocket = localSnocket iocp
           address = localAddressFromPath localPipe
           configureSocket = mempty
-      doListenToForwarder snocket configureSocket address noTimeLimitsHandshake app
+      doListenToForwarder snocket makeLocalBearer configureSocket address noTimeLimitsHandshake app
     RemoteSocket host port -> do
       listenAddress:_ <- Socket.getAddrInfo Nothing (Just $ T.unpack host) (Just $ show port)
       let snocket = socketSnocket iocp
           address = Socket.addrAddress listenAddress
           configureSocket fd _addr =
             Socket.setSocketOption fd Socket.ReuseAddr 1
-      doListenToForwarder snocket configureSocket address timeLimitsHandshake app
+      doListenToForwarder snocket makeSocketBearer configureSocket address timeLimitsHandshake app
 
 doListenToForwarder
   :: Ord addr
   => Snocket IO fd addr
+  -> MakeBearer IO fd
   -> (fd -> addr -> IO ()) -- ^ configure socket
   -> addr
   -> ProtocolTimeLimits (Handshake UnversionedProtocol Term)
   -> OuroborosApplication 'ResponderMode addr LBS.ByteString IO Void ()
   -> IO Void
-doListenToForwarder snocket configureSocket address timeLimits app = do
+doListenToForwarder snocket makeBearer configureSocket address timeLimits app = do
   networkState <- newNetworkMutableState
   _ <- async $ cleanNetworkMutableState networkState
   withServerNode
     snocket
+    makeBearer
     configureSocket
     nullNetworkServerTracers
     networkState

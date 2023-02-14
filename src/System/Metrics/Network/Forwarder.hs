@@ -33,7 +33,9 @@ import           Ouroboros.Network.Protocol.Handshake.Unversioned (UnversionedPr
                                                                    unversionedHandshakeCodec,
                                                                    unversionedProtocolDataCodec)
 import           Ouroboros.Network.Protocol.Handshake.Version (acceptableVersion, simpleSingletonVersions)
-import           Ouroboros.Network.Snocket (Snocket, localAddressFromPath, localSnocket, socketSnocket)
+import           Ouroboros.Network.Snocket (MakeBearer, Snocket,
+                                            localAddressFromPath, localSnocket, socketSnocket,
+                                            makeLocalBearer, makeSocketBearer)
 import           Ouroboros.Network.Socket (connectToNode, nullNetworkConnectTracers)
 import qualified System.Metrics as EKG
 
@@ -52,23 +54,25 @@ connectToAcceptor config@ForwarderConfiguration{..} ekgStore = withIOManager $ \
     LocalPipe localPipe -> do
       let snocket = localSnocket iocp
           address = localAddressFromPath localPipe
-      doConnectToAcceptor snocket mempty address noTimeLimitsHandshake app
+      doConnectToAcceptor snocket makeLocalBearer mempty address noTimeLimitsHandshake app
     RemoteSocket host port -> do
       acceptorAddr:_ <- Socket.getAddrInfo Nothing (Just $ T.unpack host) (Just $ show port)
       let snocket = socketSnocket iocp
           address = Socket.addrAddress acceptorAddr
-      doConnectToAcceptor snocket mempty address timeLimitsHandshake app
+      doConnectToAcceptor snocket makeSocketBearer mempty address timeLimitsHandshake app
 
 doConnectToAcceptor
   :: Snocket IO fd addr
+  -> MakeBearer IO fd
   -> (fd -> IO ()) -- ^ configure socket
   -> addr
   -> ProtocolTimeLimits (Handshake UnversionedProtocol Term)
   -> OuroborosApplication 'InitiatorMode addr LBS.ByteString IO () Void
   -> IO ()
-doConnectToAcceptor snocket configureSocket address timeLimits app =
+doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
   connectToNode
     snocket
+    makeBearer 
     configureSocket
     unversionedHandshakeCodec
     timeLimits
