@@ -32,11 +32,11 @@ import           Ouroboros.Network.Protocol.Handshake.Unversioned (UnversionedPr
                                                                    UnversionedProtocolData (..),
                                                                    unversionedHandshakeCodec,
                                                                    unversionedProtocolDataCodec)
-import           Ouroboros.Network.Protocol.Handshake.Version (acceptableVersion, simpleSingletonVersions)
+import           Ouroboros.Network.Protocol.Handshake.Version (acceptableVersion, queryVersion, simpleSingletonVersions)
 import           Ouroboros.Network.Snocket (MakeBearer, Snocket,
                                             localAddressFromPath, localSnocket, socketSnocket,
                                             makeLocalBearer, makeSocketBearer)
-import           Ouroboros.Network.Socket (connectToNode, nullNetworkConnectTracers)
+import           Ouroboros.Network.Socket (HandshakeCallbacks (..), connectToNode, nullNetworkConnectTracers)
 import qualified System.Metrics as EKG
 
 import           System.Metrics.Configuration (ForwarderConfiguration (..), HowToConnect (..))
@@ -78,7 +78,7 @@ doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
     timeLimits
     unversionedProtocolDataCodec
     nullNetworkConnectTracers
-    acceptableVersion
+    (HandshakeCallbacks acceptableVersion queryVersion)
     (simpleSingletonVersions
        UnversionedProtocol
        UnversionedProtocolData
