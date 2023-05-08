@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ghc: [ "8.10.7", "9.2.4" ]
+        ghc: [ "8.10.7", "9.2.7", "9.6.1" ]
 
     steps:
     - uses: actions/checkout@v2
@@ -22,6 +22,7 @@ jobs:
       name: Setup Haskell
       with:
         ghc-version: ${{ matrix.ghc }}
+        cabal-version: 3.10.1.0
 
     - name: Freeze dependencies
       run: |
@@ -39,8 +40,8 @@ jobs:
 
     - name: Build
       run: |
-        cabal build 
+        cabal build
 
     - name: Test
       run: |
-        cabal test 
+        cabal test
