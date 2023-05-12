@@ -24,6 +24,10 @@ index-state:
 
 packages: ./.
 
+constraints:
+  -- The API for this has changed so for now keep the old version.
+  ouroboro-network-framework < 0.6
+
 test-show-details: direct
 
 tests: True
