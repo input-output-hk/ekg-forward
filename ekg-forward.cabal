@@ -65,7 +65,8 @@ library
                        , io-classes >= 0.3
                        , network
                        , ouroboros-network-api
-                       , ouroboros-network-framework >= 0.3
+                       -- The API has changed in 0.6 so don't use it.
+                       , ouroboros-network-framework < 0.6
                        , serialise
                        , stm
                        , text
