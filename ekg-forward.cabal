@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                ekg-forward
-version:             0.3.0.2
+version:             0.3.0.3
 synopsis:            See README for more info
 description:         See README for more info
 homepage:            https://github.com/input-output-hk/ekg-forward
