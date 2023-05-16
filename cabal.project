@@ -15,18 +15,11 @@ repository cardano-haskell-packages
 -- to run if you update either of these.
 -- Bump this if you need newer packages from Hackage
 
--- this one for haskell.nix
-index-state: 2023-01-30T23:55:53Z
-
 index-state:
   , hackage.haskell.org 2023-05-04T00:55:55Z
-  , cardano-haskell-packages 2023-05-08T21:39:57Z
+  , cardano-haskell-packages 2023-05-16T03:39:10Z
 
 packages: ./.
-
-constraints:
-  -- The API for this has changed so for now keep the old version.
-  ouroboro-network-framework < 0.6
 
 test-show-details: direct
 
