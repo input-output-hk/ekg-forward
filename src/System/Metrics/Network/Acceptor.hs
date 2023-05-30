@@ -32,6 +32,7 @@ import           Ouroboros.Network.Snocket (MakeBearer, Snocket,
                                             localAddressFromPath, localSnocket, socketSnocket,
                                             makeLocalBearer, makeSocketBearer)
 import           Ouroboros.Network.Socket (AcceptedConnectionsLimit (..),
+                                           HandshakeCallbacks (..),
                                            SomeResponderApplication (..),
                                            cleanNetworkMutableState, newNetworkMutableState,
                                            nullNetworkServerTracers, withServerNode)
@@ -42,7 +43,7 @@ import           Ouroboros.Network.Protocol.Handshake.Unversioned (UnversionedPr
                                                                    UnversionedProtocolData (..),
                                                                    unversionedHandshakeCodec,
                                                                    unversionedProtocolDataCodec)
-import           Ouroboros.Network.Protocol.Handshake.Version (acceptableVersion, simpleSingletonVersions)
+import           Ouroboros.Network.Protocol.Handshake.Version (acceptableVersion, queryVersion, simpleSingletonVersions)
 import qualified System.Metrics as EKG
 
 import qualified System.Metrics.Protocol.Acceptor as Acceptor
@@ -95,7 +96,7 @@ doListenToForwarder snocket makeBearer configureSocket address timeLimits app = 
     unversionedHandshakeCodec
     timeLimits
     unversionedProtocolDataCodec
-    acceptableVersion
+    (HandshakeCallbacks acceptableVersion queryVersion)
     (simpleSingletonVersions
       UnversionedProtocol
       UnversionedProtocolData
