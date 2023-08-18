@@ -25,8 +25,8 @@ runEKGAcceptor config ekgStore =
     Left (_e :: SomeException) -> runEKGAcceptor config ekgStore
     Right _ -> return ()
  where
-  mkStores = do
+  mkStores _ = do
     metricsStore <- newTVarIO emptyMetricsLocalStore
     return (ekgStore, metricsStore)
 
-  peerErrorHandler = return ()
+  peerErrorHandler _ = return ()
