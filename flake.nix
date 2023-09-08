@@ -3,7 +3,6 @@
 
   inputs = {
     haskellNix.url = "github:input-output-hk/haskell.nix";
-    haskellNix.inputs.tullia.follows = "tullia";
     nixpkgs.follows = "haskellNix/nixpkgs-unstable";
     iohkNix.url = "github:input-output-hk/iohk-nix";
     flake-utils.url = "github:hamishmack/flake-utils/hkm/nested-hydraJobs";
