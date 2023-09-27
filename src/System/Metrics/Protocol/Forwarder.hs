@@ -8,8 +8,8 @@ module System.Metrics.Protocol.Forwarder (
   , ekgForwarderPeer
   ) where
 
-import           Network.TypedProtocol.Core (Peer (..), PeerHasAgency (..),
-                                             PeerRole (..))
+import           Network.TypedProtocol.Core
+import           Network.TypedProtocol.Peer.Server
 
 import           System.Metrics.Protocol.Type
 
@@ -34,18 +34,18 @@ data EKGForwarder req resp m a = EKGForwarder {
 ekgForwarderPeer
   :: Monad m
   => EKGForwarder req resp m a
-  -> Peer (EKGForward req resp) 'AsServer 'StIdle m a
+  -> Server (EKGForward req resp) 'NonPipelined 'Empty 'StIdle m stm a
 ekgForwarderPeer EKGForwarder{..} =
   -- In the 'StIdle' state the forwarder is awaiting a request message
   -- from the acceptor.
-  Await (ClientAgency TokIdle) $ \case
+  Await $ \case
     -- The acceptor sent us a request for new metrics, so now we're
     -- in the 'StBusy' state which means it's the forwarder's turn to send
     -- a reply.
     MsgReq req -> Effect $ do
       (resp, next) <- recvMsgReq req
-      return $ Yield (ServerAgency TokBusy) (MsgResp resp) (ekgForwarderPeer next)
+      return $ Yield (MsgResp resp) (ekgForwarderPeer next)
 
     -- The acceptor sent the done transition, so we're in the 'StDone' state
     -- so all we can do is stop using 'done', with a return value.
-    MsgDone -> Effect $ Done TokDone <$> recvMsgDone
+    MsgDone -> Effect $ Done <$> recvMsgDone

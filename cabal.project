@@ -17,7 +17,7 @@ repository cardano-haskell-packages
 
 index-state:
   , hackage.haskell.org 2023-08-02T14:18:01Z
-  , cardano-haskell-packages 2023-08-24T12:17:17Z
+  , cardano-haskell-packages 2023-09-05T08:50:43Z
 
 packages: ./.
 
@@ -31,3 +31,27 @@ if impl(ghc >= 9.6)
     , *:base
     , ekg-core:*
     , protolude:*
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/typed-protocols
+  tag: fdfc6c580b964458e53776ea48417b67c7494d71
+  --sha256: sha256-LoPuQIlMu1QNEzb/p2Gnb/SqMxJpBQLUQVGz0TlyIho=
+  subdir:
+    typed-protocols
+    typed-protocols-cborg
+    typed-protocols-examples
+    typed-protocols-stateful
+    typed-protocols-stateful-cborg
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/ouroboros-network
+  tag: f1bb5e5fce3e704c9f252df9f36e687bd3d4f1cc
+  --sha256: sha256-n9aom5Jw23pNNCLeVBczSyAomBqHOByJ7htVo36csh0=
+  subdir: network-mux
+          ouroboros-network
+          ouroboros-network-api
+          ouroboros-network-framework
+          ouroboros-network-protocols
+          ouroboros-network-testing
