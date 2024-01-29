@@ -62,10 +62,10 @@ library
                        , cborg
                        , contra-tracer
                        , ekg-core
-                       , io-classes >= 0.3
+                       , io-classes     ^>=1.3.0
                        , network
                        , ouroboros-network-api
-                       , ouroboros-network-framework >= 0.8 && < 0.10
+                       , ouroboros-network-framework >= 0.8 && < 0.12
                        , serialise
                        , stm
                        , text
