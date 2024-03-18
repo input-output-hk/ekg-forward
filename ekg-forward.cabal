@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                ekg-forward
-version:             0.4
+version:             0.5
 synopsis:            See README for more info
 description:         See README for more info
 homepage:            https://github.com/input-output-hk/ekg-forward
@@ -62,10 +62,10 @@ library
                        , cborg
                        , contra-tracer
                        , ekg-core
-                       , io-classes >= 0.3
+                       , io-classes >= 1.4.1
                        , network
                        , ouroboros-network-api
-                       , ouroboros-network-framework >= 0.8 && < 0.10
+                       , ouroboros-network-framework >= 0.8 && < 0.13
                        , serialise
                        , stm
                        , text
