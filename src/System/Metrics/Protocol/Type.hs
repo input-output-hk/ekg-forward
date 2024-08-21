@@ -1,9 +1,9 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 
 -- | The type of the EKG forwarding/accepting protocol.
@@ -13,14 +13,12 @@
 
 module System.Metrics.Protocol.Type
   ( EKGForward (..)
+  , SingEKGForward (..)
   , Message (..)
-  , ClientHasAgency (..)
-  , ServerHasAgency (..)
-  , NobodyHasAgency (..)
   ) where
 
-import           Data.Proxy (Proxy(..))
-import           Network.TypedProtocol.Core (Protocol (..))
+import           Data.Singletons
+import           Network.TypedProtocol.Core
 import           Ouroboros.Network.Util.ShowProxy (ShowProxy(..))
 
 -- | A kind to identify our protocol, and the types of the states in the state
@@ -69,6 +67,16 @@ instance (ShowProxy req, ShowProxy resp)
     , ")"
     ]
 
+data SingEKGForward (st :: EKGForward req resp) where
+  SingIdle :: SingEKGForward 'StIdle
+  SingBusy :: SingEKGForward 'StBusy
+  SingDone :: SingEKGForward 'StDone
+
+deriving instance Show (SingEKGForward st)
+instance StateTokenI 'StIdle where stateToken = SingIdle
+instance StateTokenI 'StBusy where stateToken = SingBusy
+instance StateTokenI 'StDone where stateToken = SingDone
+
 instance Protocol (EKGForward req resp) where
 
   -- | The messages in the EKG forwarding/accepting protocol.
@@ -91,32 +99,12 @@ instance Protocol (EKGForward req resp) where
   -- 2. When both peers are in Busy state, the forwarder is expected to send
   --    a reply to the acceptor (list of new metrics).
   --
-  -- So we assume that, from __interaction__ point of view:
-  -- 1. ClientHasAgency (from 'Network.TypedProtocol.Core') corresponds to acceptor's agency.
-  -- 3. ServerHasAgency (from 'Network.TypedProtocol.Core') corresponds to forwarder's agency.
-  --
-  data ClientHasAgency st where
-    TokIdle :: ClientHasAgency 'StIdle
+  type StateAgency 'StIdle = 'ClientAgency
+  type StateAgency 'StBusy = 'ServerAgency
+  type StateAgency 'StDone = 'NobodyAgency
 
-  data ServerHasAgency st where
-    TokBusy :: ServerHasAgency 'StBusy
+  type StateToken = SingEKGForward
 
-  data NobodyHasAgency st where
-    TokDone :: NobodyHasAgency 'StDone
 
-  -- | Impossible cases.
-  exclusionLemma_ClientAndServerHaveAgency TokIdle tok = case tok of {}
-  exclusionLemma_NobodyAndClientHaveAgency TokDone tok = case tok of {}
-  exclusionLemma_NobodyAndServerHaveAgency TokDone tok = case tok of {}
-
-instance (Show req, Show resp)
-      => Show (Message (EKGForward req resp) from to) where
-  show MsgReq{}  = "MsgReq"
-  show MsgResp{} = "MsgResp"
-  show MsgDone{} = "MsgDone"
-
-instance Show (ClientHasAgency (st :: EKGForward req resp)) where
-  show TokIdle = "TokIdle"
-
-instance Show (ServerHasAgency (st :: EKGForward req resp)) where
-  show TokBusy = "TokBusy"
+deriving instance (Show req, Show resp)
+               => Show (Message (EKGForward req resp) from to)

@@ -12,8 +12,7 @@ module System.Metrics.Protocol.Acceptor (
   , ekgAcceptorPeer
   ) where
 
-import           Network.TypedProtocol.Core (Peer (..), PeerHasAgency (..),
-                                             PeerRole (..))
+import           Network.TypedProtocol.Peer.Client
 
 import           System.Metrics.Protocol.Type
 
@@ -36,14 +35,14 @@ data EKGAcceptor req resp m a where
 ekgAcceptorPeer
   :: Monad m
   => EKGAcceptor req resp m a
-  -> Peer (EKGForward req resp) 'AsClient 'StIdle m a
+  -> Client (EKGForward req resp) 'NonPipelined 'StIdle m a
 ekgAcceptorPeer = \case
   SendMsgReq req next ->
     -- Send our message (request for the new metrics from the forwarder).
-    Yield (ClientAgency TokIdle) (MsgReq req) $
+    Yield (MsgReq req) $
       -- We're now into the 'StBusy' state, and now we'll wait for a reply
       -- from the forwarder.
-      Await (ServerAgency TokBusy) $ \(MsgResp resp) ->
+      Await $ \(MsgResp resp) ->
         Effect $
           ekgAcceptorPeer <$> next resp
 
@@ -53,4 +52,4 @@ ekgAcceptorPeer = \case
       -- 'done', with a return value.
       Effect $ do
         r <- getResult
-        return $ Yield (ClientAgency TokIdle) MsgDone (Done TokDone r)
+        return $ Yield MsgDone (Done r)
