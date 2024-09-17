@@ -20,7 +20,7 @@ mkResponse
   :: ForwarderConfiguration
   -> EKG.Store
   -> Forwarder.EKGForwarder Request Response IO ()
-mkResponse config@ForwarderConfiguration{..} ekgStore =
+mkResponse ForwarderConfiguration{..} ekgStore =
   Forwarder.EKGForwarder
     { Forwarder.recvMsgReq = \request -> do
         actionOnRequest request
@@ -28,14 +28,10 @@ mkResponse config@ForwarderConfiguration{..} ekgStore =
         case request of
           GetAllMetrics -> do
             let supportedMetrics = mapMaybe filterMetrics allMetrics
-            return ( ResponseMetrics supportedMetrics
-                   , mkResponse config ekgStore
-                   )
+            return $ ResponseMetrics supportedMetrics
           GetMetrics (NE.toList -> mNames) -> do
             let metricsWeNeed = mapMaybe (filterMetricsWeNeed mNames) allMetrics
-            return ( ResponseMetrics metricsWeNeed
-                   , mkResponse config ekgStore
-                   )
+            return $ ResponseMetrics metricsWeNeed
     , Forwarder.recvMsgDone = return ()
     }
 
@@ -67,6 +63,6 @@ mkResponseDummy
   :: Forwarder.EKGForwarder Request Response IO ()
 mkResponseDummy =
   Forwarder.EKGForwarder
-    { Forwarder.recvMsgReq  = const $ return (ResponseMetrics [], mkResponseDummy)
+    { Forwarder.recvMsgReq  = const $ return $ ResponseMetrics []
     , Forwarder.recvMsgDone = return ()
     }

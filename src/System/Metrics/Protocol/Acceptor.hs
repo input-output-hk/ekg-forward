@@ -2,6 +2,8 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 
+{- HLINT ignore "Use <$>" -}
+
 -- | A view of the EKG forwarding/accepting protocol from the point of view of the
 -- client.
 --
