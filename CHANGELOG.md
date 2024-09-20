@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0 - Sep 2024
+
+* Remove potentially leaky continuation passing of `EKGForwarder`.
+* Bump dependency version bounds.
+
 ## 0.5.0
 
 * Bump dependency version bounds
