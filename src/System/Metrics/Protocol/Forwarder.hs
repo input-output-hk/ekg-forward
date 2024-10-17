@@ -1,15 +1,19 @@
+{-# options_ghc -w #-}
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module System.Metrics.Protocol.Forwarder (
     EKGForwarder (..)
   , ekgForwarderPeer
   ) where
 
-import           Network.TypedProtocol.Core (Peer (..), PeerHasAgency (..),
-                                             PeerRole (..))
+import           Network.TypedProtocol.Core (PeerRole (..), IsPipelined (..))
+import qualified Network.TypedProtocol.Core as Core
+import           Network.TypedProtocol.Peer
 
 import           System.Metrics.Protocol.Type
 
@@ -32,22 +36,21 @@ data EKGForwarder req resp m a = EKGForwarder {
 -- 'EKGForward' protocol.
 --
 ekgForwarderPeer
-  :: Monad m
+  :: forall m req resp a. ()
+  => Monad m
   => EKGForwarder req resp m a
-  -> Peer (EKGForward req resp) 'AsServer 'StIdle m a
+  -> Peer (EKGForward req resp) 'AsServer 'NonPipelined 'StIdle m a
 ekgForwarderPeer EKGForwarder{..} = go
   where
+    go :: Peer (EKGForward req resp) 'AsServer 'NonPipelined 'StIdle m a
     go =
       -- In the 'StIdle' state the forwarder is awaiting a request message
       -- from the acceptor.
-      Await (ClientAgency TokIdle) $ \case
-        -- The acceptor sent us a request for new metrics, so now we're
-        -- in the 'StBusy' state which means it's the forwarder's turn to send
-        -- a reply.
-        MsgReq req -> Effect $ do
+      Await Core.ReflClientAgency \case
+        MsgReq req -> Effect do
           resp <- recvMsgReq req
-          return $ Yield (ServerAgency TokBusy) (MsgResp resp) go
+          return $ Yield Core.ReflServerAgency (MsgResp resp) go
 
         -- The acceptor sent the done transition, so we're in the 'StDone' state
         -- so all we can do is stop using 'done', with a return value.
-        MsgDone -> Effect $ Done TokDone <$> recvMsgDone
+        MsgDone -> Effect $ Done Core.ReflNobodyAgency <$> recvMsgDone

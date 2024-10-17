@@ -1,6 +1,8 @@
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module System.Metrics.Network.Forwarder
   ( connectToAcceptor
@@ -18,6 +20,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
 import           Data.Void (Void)
 import qualified Network.Socket as Socket
+import           Control.Monad (void)
 import           Ouroboros.Network.Context (MinimalInitiatorContext, ResponderContext)
 import           Ouroboros.Network.Driver.Simple (runPeer)
 import           Ouroboros.Network.Driver.Limits (ProtocolTimeLimits)
@@ -38,7 +41,7 @@ import           Ouroboros.Network.Protocol.Handshake.Version (acceptableVersion
 import           Ouroboros.Network.Snocket (MakeBearer, Snocket,
                                             localAddressFromPath, localSnocket, socketSnocket,
                                             makeLocalBearer, makeSocketBearer)
-import           Ouroboros.Network.Socket (HandshakeCallbacks (..), connectToNode, nullNetworkConnectTracers)
+import           Ouroboros.Network.Socket (HandshakeCallbacks (..), ConnectToArgs (..), connectToNode, nullNetworkConnectTracers)
 import qualified System.Metrics as EKG
 
 import           System.Metrics.Configuration (ForwarderConfiguration (..), HowToConnect (..))
@@ -63,8 +66,18 @@ connectToAcceptor config@ForwarderConfiguration{..} ekgStore = withIOManager $ \
           address = Socket.addrAddress acceptorAddr
       doConnectToAcceptor snocket makeSocketBearer mempty address timeLimitsHandshake app
 
+  -- connectToNode
+  --   :: Snocket IO fd0 addr0
+  --   -> MakeBearer IO fd0
+  --   -> ConnectToArgs fd0 addr0 vNumber0 vData0
+  --   -> (fd0 -> IO ())
+  --   -> Ouroboros.Network.Protocol.Handshake.Version.Versions vNumber0 vData0 (Ouroboros.Network.Mux.OuroborosApplicationWithMinimalCtx muxMode0 addr0 LBS.ByteString IO a0 b0)
+  --   -> Maybe addr0
+  --   -> addr0
+  --   -> IO (Either GHC.Exception.Type.SomeException (Either a0 b0))
 doConnectToAcceptor
-  :: Snocket IO fd addr
+  :: forall fd addr. ()
+  => Snocket IO fd addr
   -> MakeBearer IO fd
   -> (fd -> IO ()) -- ^ configure socket
   -> addr
@@ -75,21 +88,30 @@ doConnectToAcceptor
                           LBS.ByteString IO () Void
   -> IO ()
 doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
-  connectToNode
-    snocket
-    makeBearer 
-    configureSocket
-    unversionedHandshakeCodec
-    timeLimits
-    unversionedProtocolDataCodec
-    nullNetworkConnectTracers
-    (HandshakeCallbacks acceptableVersion queryVersion)
-    (simpleSingletonVersions
-       UnversionedProtocol
-       UnversionedProtocolData
-       app)
-    Nothing
-    address
+
+  let
+    connectToArgs :: ConnectToArgs fd addr vNumber0 vData0
+    connectToArgs = ConnectToArgs undefined undefined undefined undefined undefined
+
+-- connectToArgs :: Ouroboros.Network.Socket.ConnectToArgs fd0 addr0 vNumber0 vData0
+
+  void do
+    connectToNode
+      snocket
+      makeBearer
+
+      configureSocket -- undefined --
+      (simpleSingletonVersions
+         UnversionedProtocol
+         UnversionedProtocolData
+         app)
+      -- undefined -- unversionedHandshakeCodec
+      -- undefined -- timeLimits
+      -- undefined -- unversionedProtocolDataCodec
+      -- nullNetworkConnectTracers
+      -- (HandshakeCallbacks acceptableVersion queryVersion)
+      Nothing
+      address
 
 forwarderApp
   :: ForwarderConfiguration

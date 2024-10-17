@@ -1,9 +1,12 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneKindSignatures #-}
 {-# LANGUAGE TypeFamilies #-}
 
 -- | The type of the EKG forwarding/accepting protocol.
@@ -14,14 +17,16 @@
 module System.Metrics.Protocol.Type
   ( EKGForward (..)
   , Message (..)
-  , ClientHasAgency (..)
-  , ServerHasAgency (..)
-  , NobodyHasAgency (..)
+  , SEKGForward (..)
+  -- , ClientHasAgency (..)
+  -- , ServerHasAgency (..)
+  -- , NobodyHasAgency (..)
   ) where
 
-import           Data.Proxy (Proxy(..))
-import           Network.TypedProtocol.Core (Protocol (..))
-import           Ouroboros.Network.Util.ShowProxy (ShowProxy(..))
+import           Data.Kind (Type)
+import           Data.Proxy (Proxy (..))
+import           Network.TypedProtocol.Core (StateTokenI (..), Protocol (..), Agency (..))
+import           Ouroboros.Network.Util.ShowProxy (ShowProxy (..))
 
 -- | A kind to identify our protocol, and the types of the states in the state
 -- transition diagram of the protocol.
@@ -59,6 +64,28 @@ data EKGForward req resp where
   -- | Both the acceptor and forwarder are in the terminal state. They're done.
   StDone :: EKGForward req resp
 
+-- | Singleton type of EKGForward. Same as:
+--
+-- @
+-- type SEKGForward :: EKGForward req resp -> Type
+-- type SEKGForward = TypeRep
+-- @
+type SEKGForward :: EKGForward req resp -> Type
+data SEKGForward ekgForward where
+  SStIdle :: SEKGForward 'StIdle
+  SStBusy :: SEKGForward 'StBusy
+  SStDone :: SEKGForward 'StDone
+
+deriving stock
+  instance Show (SEKGForward ekgForward)
+
+instance StateTokenI 'StIdle where
+  stateToken = SStIdle
+instance StateTokenI 'StBusy where
+  stateToken = SStBusy
+instance StateTokenI 'StDone where
+  stateToken = SStDone
+
 instance (ShowProxy req, ShowProxy resp)
       => ShowProxy (EKGForward req resp) where
   showProxy _ = concat
@@ -95,28 +122,14 @@ instance Protocol (EKGForward req resp) where
   -- 1. ClientHasAgency (from 'Network.TypedProtocol.Core') corresponds to acceptor's agency.
   -- 3. ServerHasAgency (from 'Network.TypedProtocol.Core') corresponds to forwarder's agency.
   --
-  data ClientHasAgency st where
-    TokIdle :: ClientHasAgency 'StIdle
+  type StateAgency 'StIdle = 'ClientAgency
+  type StateAgency 'StBusy = 'ServerAgency
+  type StateAgency 'StDone = 'NobodyAgency
 
-  data ServerHasAgency st where
-    TokBusy :: ServerHasAgency 'StBusy
-
-  data NobodyHasAgency st where
-    TokDone :: NobodyHasAgency 'StDone
-
-  -- | Impossible cases.
-  exclusionLemma_ClientAndServerHaveAgency TokIdle tok = case tok of {}
-  exclusionLemma_NobodyAndClientHaveAgency TokDone tok = case tok of {}
-  exclusionLemma_NobodyAndServerHaveAgency TokDone tok = case tok of {}
+  type StateToken = SEKGForward
 
 instance (Show req, Show resp)
       => Show (Message (EKGForward req resp) from to) where
   show MsgReq{}  = "MsgReq"
   show MsgResp{} = "MsgResp"
   show MsgDone{} = "MsgDone"
-
-instance Show (ClientHasAgency (st :: EKGForward req resp)) where
-  show TokIdle = "TokIdle"
-
-instance Show (ServerHasAgency (st :: EKGForward req resp)) where
-  show TokBusy = "TokBusy"
