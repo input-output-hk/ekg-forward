@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7 - Oct 2024
+
+* Updated to `typed-protocols-0.3`.
+
 ## 0.6.0 - Sep 2024
 
 * Remove potentially leaky continuation passing of `EKGForwarder`.
