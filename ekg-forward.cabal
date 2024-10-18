@@ -65,12 +65,18 @@ library
                        , io-classes >= 1.4.1
                        , network
                        , ouroboros-network-api
-                       , ouroboros-network-framework >= 0.8 && < 0.14
+
+                       -- mine
+                       , ouroboros-network-framework == 0.13.2.4
+                       , network-mux == 0.4.5.3
+                       -- mine
+
+                       -- , ouroboros-network-framework >= 0.8 && < 0.14
                        , serialise
                        , stm
                        , text
                        , time
-                       , typed-protocols ^>= 0.1.1
+                       , typed-protocols ^>= 0.3
                        , typed-protocols-cborg
                        , unordered-containers
 

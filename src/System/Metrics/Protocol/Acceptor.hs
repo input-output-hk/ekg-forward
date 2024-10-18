@@ -14,8 +14,9 @@ module System.Metrics.Protocol.Acceptor (
   , ekgAcceptorPeer
   ) where
 
-import           Network.TypedProtocol.Core (Peer (..), PeerHasAgency (..),
-                                             PeerRole (..))
+import           Network.TypedProtocol.Core (PeerRole (..))
+import           Network.TypedProtocol.Peer (Peer (..))
+import qualified Network.TypedProtocol.Core as Core
 
 import           System.Metrics.Protocol.Type
 
@@ -38,21 +39,23 @@ data EKGAcceptor req resp m a where
 ekgAcceptorPeer
   :: Monad m
   => EKGAcceptor req resp m a
-  -> Peer (EKGForward req resp) 'AsClient 'StIdle m a
+  -> Peer (EKGForward req resp) 'AsClient 'Core.NonPipelined 'StIdle m a
 ekgAcceptorPeer = \case
   SendMsgReq req next ->
-    -- Send our message (request for the new metrics from the forwarder).
-    Yield (ClientAgency TokIdle) (MsgReq req) $
-      -- We're now into the 'StBusy' state, and now we'll wait for a reply
-      -- from the forwarder.
-      Await (ServerAgency TokBusy) $ \(MsgResp resp) ->
-        Effect $
-          ekgAcceptorPeer <$> next resp
+    undefined
+  -- SendMsgReq req next ->
+  --   -- Send our message (request for the new metrics from the forwarder).
+  --   Yield (ClientAgency TokIdle) (MsgReq req) $
+  --     -- We're now into the 'StBusy' state, and now we'll wait for a reply
+  --     -- from the forwarder.
+  --     Await (ServerAgency TokBusy) $ \(MsgResp resp) ->
+  --       Effect $
+  --         ekgAcceptorPeer <$> next resp
 
-  SendMsgDone getResult ->
-      -- We do an actual transition using 'yield', to go from the 'StIdle' to
-      -- 'StDone' state. Once in the 'StDone' state we can actually stop using
-      -- 'done', with a return value.
-      Effect $ do
-        r <- getResult
-        return $ Yield (ClientAgency TokIdle) MsgDone (Done TokDone r)
+  -- SendMsgDone getResult ->
+  --     -- We do an actual transition using 'yield', to go from the 'StIdle' to
+  --     -- 'StDone' state. Once in the 'StDone' state we can actually stop using
+  --     -- 'done', with a return value.
+  --     Effect $ do
+  --       r <- getResult
+  --       return $ Yield (ClientAgency TokIdle) MsgDone (Done TokDone r)
