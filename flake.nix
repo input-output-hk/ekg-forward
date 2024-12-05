@@ -8,7 +8,7 @@
     iohkNix.url = "github:input-output-hk/iohk-nix";
     flake-utils.url = "github:hamishmack/flake-utils/hkm/nested-hydraJobs";
 
-    CHaP.url = "github:input-output-hk/cardano-haskell-packages?ref=repo";
+    CHaP.url = "github:intersectmbo/cardano-haskell-packages?ref=repo";
     CHaP.flake = false;
 
     # cicero
@@ -22,7 +22,7 @@
   outputs = inputs: let
     supportedSystems = [
       "x86_64-linux"
-      #"x86_64-darwin"
+      "x86_64-darwin"
       #"aarch64-linux"
       #"aarch64-darwin"
     ];
@@ -53,7 +53,7 @@
           #  nix flake lock --update-input CHaP
           #
           inputMap = {
-            "https://input-output-hk.github.io/cardano-haskell-packages" = inputs.CHaP;
+            "https://chap.intersectmbo.org/" = inputs.CHaP;
           };
 
           # tools we want in our shell
@@ -78,9 +78,6 @@
           # specific enough, or doesn't allow setting these.
           modules = [
             ({pkgs, ...}: {
-              # Use our forked libsodium from iohk-nix crypto overlay.
-              packages.cardano-crypto-class.components.library.pkgconfig = lib.mkForce [[pkgs.libsodium-vrf pkgs.secp256k1]];
-              packages.cardano-crypto-praos.components.library.pkgconfig = lib.mkForce [[pkgs.libsodium-vrf]];
               packages.ekg-forward = {
                 configureFlags = ["--ghc-option=-Werror"];
                 components = {
