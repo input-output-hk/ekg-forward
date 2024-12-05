@@ -64,6 +64,7 @@ library
                        , ekg-core
                        , io-classes >= 1.4.1
                        , network
+                       , network-mux
                        , ouroboros-network-api
                        , ouroboros-network-framework ^>= 0.14
                        , singletons ^>= 3.0
