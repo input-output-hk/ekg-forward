@@ -18,6 +18,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
 import           Data.Time.Clock (NominalDiffTime)
 import           Data.Void (Void)
+import qualified Network.Mux as Mux
 import qualified Network.Socket as Socket
 import           Ouroboros.Network.Context (MinimalInitiatorContext, ResponderContext)
 import           Ouroboros.Network.Driver.Limits (ProtocolTimeLimits)
@@ -26,7 +27,7 @@ import           Ouroboros.Network.IOManager (withIOManager)
 import           Ouroboros.Network.Driver.Simple (runPeer)
 import           Ouroboros.Network.Mux (MiniProtocol (..), MiniProtocolCb (..),
                                         MiniProtocolLimits (..),
-                                        MiniProtocolNum (..), MuxMode (..),
+                                        MiniProtocolNum (..),
                                         OuroborosApplication (..),
                                         RunMiniProtocol (..),
                                         miniProtocolLimits, miniProtocolNum, miniProtocolRun)
@@ -83,7 +84,7 @@ doListenToForwarder
   -> (fd -> addr -> IO ()) -- ^ configure socket
   -> addr
   -> ProtocolTimeLimits (Handshake UnversionedProtocol Term)
-  -> OuroborosApplication 'ResponderMode
+  -> OuroborosApplication 'Mux.ResponderMode
                           (MinimalInitiatorContext addr)
                           (ResponderContext addr)
                           LBS.ByteString IO Void ()
@@ -114,7 +115,7 @@ acceptorApp
   :: AcceptorConfiguration
   -> (ResponderContext addr -> IO (EKG.Store, TVar MetricsLocalStore))
   -> (ResponderContext addr -> IO ())
-  -> OuroborosApplication 'ResponderMode
+  -> OuroborosApplication 'Mux.ResponderMode
                           (MinimalInitiatorContext addr)
                           (ResponderContext addr)
                           LBS.ByteString IO Void ()
@@ -131,7 +132,7 @@ acceptEKGMetricsResp
   :: AcceptorConfiguration
   -> (responderCtx -> IO (EKG.Store, TVar MetricsLocalStore))
   -> (responderCtx -> IO ())
-  -> RunMiniProtocol 'ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
+  -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
 acceptEKGMetricsResp config mkStores peerErrorHandler =
   ResponderProtocolOnly $ runPeerWithStores config mkStores peerErrorHandler
 
@@ -139,7 +140,7 @@ acceptEKGMetricsInit
   :: AcceptorConfiguration
   -> (initiatorCtx -> IO (EKG.Store, TVar MetricsLocalStore))
   -> (initiatorCtx -> IO ())
-  -> RunMiniProtocol 'InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+  -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
 acceptEKGMetricsInit config mkStores peerErrorHandler =
   InitiatorProtocolOnly $ runPeerWithStores config mkStores peerErrorHandler
 
