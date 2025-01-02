@@ -17,7 +17,7 @@ repository cardano-haskell-packages
 
 index-state:
   , hackage.haskell.org 2024-10-24T18:39:40Z
-  , cardano-haskell-packages 2024-11-27T20:49:28Z
+  , cardano-haskell-packages 2025-01-02T14:22:02Z
 
 packages: ./.
 
@@ -31,22 +31,3 @@ if impl(ghc >= 9.6)
     , *:base
     , ekg-core:*
     , protolude:*
-
-source-repository-package
-  type: git
-  location: https://github.com/IntersectMBO/ouroboros-network.git
-  tag: 7e8909f97d6ecc9fff320b3ac2b785aec74751c6
-  --sha256: sha256-Evv2EwaXbr2tXlxnHVr/AAV+QB7B8EWJbQR6t4IvOQ4=
-  subdir:
-    cardano-client
-    cardano-ping
-    monoidal-synchronisation
-    network-mux
-    ntp-client
-    ouroboros-network
-    ouroboros-network-api
-    ouroboros-network-framework
-    ouroboros-network-mock
-    ouroboros-network-protocols
-    ouroboros-network-testing
-    quickcheck-monoids
