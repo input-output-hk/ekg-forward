@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8
+
+* Updated to `network-mux-0.6` and `ouroboros-network-framework-0.15`
+
 ## 0.7 - Oct 2024
 
 * Updated to `typed-protocols-0.3`.

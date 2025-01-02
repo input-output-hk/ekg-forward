@@ -20,6 +20,7 @@ import           "contra-tracer" Control.Tracer (nullTracer)
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
 import           Data.Void (Void, absurd)
+import qualified Network.Mux as Mux
 import qualified Network.Socket as Socket
 import           Network.TypedProtocol.Codec
 import           Control.Exception (throwIO)
@@ -28,7 +29,7 @@ import           Ouroboros.Network.Driver.Simple (runPeer)
 import           Ouroboros.Network.Driver.Limits (ProtocolTimeLimits)
 import           Ouroboros.Network.IOManager (withIOManager)
 import           Ouroboros.Network.Mux (MiniProtocol (..), MiniProtocolCb (..), MiniProtocolLimits (..), MiniProtocolNum (..),
-                                        MuxMode (..), OuroborosApplication (..), RunMiniProtocol (..),
+                                        OuroborosApplication (..), RunMiniProtocol (..),
                                         miniProtocolLimits, miniProtocolNum, miniProtocolRun)
 import           Ouroboros.Network.Protocol.Handshake.Codec (VersionDataCodec, noTimeLimitsHandshake,
                                                              timeLimitsHandshake)
@@ -74,7 +75,7 @@ doConnectToAcceptor
   -> (fd -> IO ()) -- ^ configure socket
   -> addr
   -> ProtocolTimeLimits (Handshake UnversionedProtocol Term)
-  -> OuroborosApplication 'InitiatorMode
+  -> OuroborosApplication 'Mux.InitiatorMode
                           (MinimalInitiatorContext addr)
                           (ResponderContext addr)
                           LBS.ByteString IO () Void
@@ -97,7 +98,7 @@ doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
       }
 
     versions :: Versions UnversionedProtocol UnversionedProtocolData
-      (OuroborosApplication 'InitiatorMode (MinimalInitiatorContext addr) (ResponderContext addr) LBS.ByteString IO () Void)
+      (OuroborosApplication 'Mux.InitiatorMode (MinimalInitiatorContext addr) (ResponderContext addr) LBS.ByteString IO () Void)
     versions = simpleSingletonVersions
        UnversionedProtocol
        UnversionedProtocolData
@@ -125,7 +126,7 @@ doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
 forwarderApp
   :: ForwarderConfiguration
   -> EKG.Store
-  -> OuroborosApplication 'InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+  -> OuroborosApplication 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
 forwarderApp config ekgStore =
   OuroborosApplication
     [ MiniProtocol
@@ -138,7 +139,7 @@ forwarderApp config ekgStore =
 forwardEKGMetrics
   :: ForwarderConfiguration
   -> EKG.Store
-  -> RunMiniProtocol 'InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+  -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
 forwardEKGMetrics config ekgStore =
   InitiatorProtocolOnly $ MiniProtocolCb \_ctx channel ->
     runPeer
@@ -151,7 +152,7 @@ forwardEKGMetrics config ekgStore =
 forwardEKGMetricsResp
   :: ForwarderConfiguration
   -> EKG.Store
-  -> RunMiniProtocol 'ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
+  -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
 forwardEKGMetricsResp config ekgStore =
   ResponderProtocolOnly $ MiniProtocolCb \_ctx channel ->
     runPeer
@@ -162,7 +163,7 @@ forwardEKGMetricsResp config ekgStore =
       (Forwarder.ekgForwarderPeer $ mkResponse config ekgStore)
 
 forwardEKGMetricsDummy
-  :: RunMiniProtocol 'InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+  :: RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
 forwardEKGMetricsDummy =
   InitiatorProtocolOnly $ MiniProtocolCb \_ctx channel ->
     runPeer
@@ -173,7 +174,7 @@ forwardEKGMetricsDummy =
       (Forwarder.ekgForwarderPeer mkResponseDummy)
 
 forwardEKGMetricsRespDummy
-  :: RunMiniProtocol 'ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
+  :: RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
 forwardEKGMetricsRespDummy =
   ResponderProtocolOnly $ MiniProtocolCb \_ctx channel ->
     runPeer
