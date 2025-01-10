@@ -3,10 +3,10 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 
 module System.Metrics.Network.Forwarder
   ( connectToAcceptor
+  , NetworkState
     -- | Export this function for Mux purpose.
   , forwardEKGMetrics
   , forwardEKGMetricsDummy
@@ -51,6 +51,8 @@ import           System.Metrics.Store.Forwarder (mkResponse, mkResponseDummy)
 import qualified System.Metrics.Protocol.Forwarder as Forwarder
 import qualified System.Metrics.Protocol.Codec as Forwarder
 
+type NetworkState = ()
+
 connectToAcceptor
   :: ForwarderConfiguration
   -> EKG.Store
@@ -78,6 +80,7 @@ doConnectToAcceptor
   -> OuroborosApplication 'Mux.InitiatorMode
                           (MinimalInitiatorContext addr)
                           (ResponderContext addr)
+                          NetworkState
                           LBS.ByteString IO () Void
   -> IO ()
 doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
@@ -98,7 +101,7 @@ doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
       }
 
     versions :: Versions UnversionedProtocol UnversionedProtocolData
-      (OuroborosApplication 'Mux.InitiatorMode (MinimalInitiatorContext addr) (ResponderContext addr) LBS.ByteString IO () Void)
+      (OuroborosApplication 'Mux.InitiatorMode (MinimalInitiatorContext addr) (ResponderContext addr) NetworkState LBS.ByteString IO () Void)
     versions = simpleSingletonVersions
        UnversionedProtocol
        UnversionedProtocolData
@@ -126,7 +129,7 @@ doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
 forwarderApp
   :: ForwarderConfiguration
   -> EKG.Store
-  -> OuroborosApplication 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+  -> OuroborosApplication 'Mux.InitiatorMode initiatorCtx responderCtx NetworkState LBS.ByteString IO () Void
 forwarderApp config ekgStore =
   OuroborosApplication
     [ MiniProtocol
@@ -139,7 +142,7 @@ forwarderApp config ekgStore =
 forwardEKGMetrics
   :: ForwarderConfiguration
   -> EKG.Store
-  -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+  -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx NetworkState LBS.ByteString IO () Void
 forwardEKGMetrics config ekgStore =
   InitiatorProtocolOnly $ MiniProtocolCb \_ctx channel ->
     runPeer
@@ -152,7 +155,7 @@ forwardEKGMetrics config ekgStore =
 forwardEKGMetricsResp
   :: ForwarderConfiguration
   -> EKG.Store
-  -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
+  -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx NetworkState LBS.ByteString IO Void ()
 forwardEKGMetricsResp config ekgStore =
   ResponderProtocolOnly $ MiniProtocolCb \_ctx channel ->
     runPeer
@@ -163,7 +166,7 @@ forwardEKGMetricsResp config ekgStore =
       (Forwarder.ekgForwarderPeer $ mkResponse config ekgStore)
 
 forwardEKGMetricsDummy
-  :: RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+  :: RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx NetworkState LBS.ByteString IO () Void
 forwardEKGMetricsDummy =
   InitiatorProtocolOnly $ MiniProtocolCb \_ctx channel ->
     runPeer
@@ -174,7 +177,7 @@ forwardEKGMetricsDummy =
       (Forwarder.ekgForwarderPeer mkResponseDummy)
 
 forwardEKGMetricsRespDummy
-  :: RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
+  :: RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx NetworkState LBS.ByteString IO Void ()
 forwardEKGMetricsRespDummy =
   ResponderProtocolOnly $ MiniProtocolCb \_ctx channel ->
     runPeer

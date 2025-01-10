@@ -3,6 +3,7 @@
 
 module System.Metrics.Network.Acceptor
   ( listenToForwarder
+  , NetworkState
   -- | Export this function for Mux purpose.
   , acceptEKGMetricsInit
   , acceptEKGMetricsResp
@@ -12,8 +13,9 @@ import           Codec.CBOR.Term (Term)
 import qualified Codec.Serialise as CBOR
 import           Control.Exception (finally)
 import           Control.Concurrent (threadDelay)
-import           Control.Concurrent.Async (async, wait)
+import           Control.Concurrent.Async (wait)
 import           Control.Concurrent.STM.TVar (TVar, readTVarIO)
+import           Control.Tracer (nullTracer)
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
 import           Data.Time.Clock (NominalDiffTime)
@@ -22,7 +24,6 @@ import qualified Network.Mux as Mux
 import qualified Network.Socket as Socket
 import           Ouroboros.Network.Context (MinimalInitiatorContext, ResponderContext)
 import           Ouroboros.Network.Driver.Limits (ProtocolTimeLimits)
-import           Ouroboros.Network.ErrorPolicy (nullErrorPolicies)
 import           Ouroboros.Network.IOManager (withIOManager)
 import           Ouroboros.Network.Driver.Simple (runPeer)
 import           Ouroboros.Network.Mux (MiniProtocol (..), MiniProtocolCb (..),
@@ -34,11 +35,7 @@ import           Ouroboros.Network.Mux (MiniProtocol (..), MiniProtocolCb (..),
 import           Ouroboros.Network.Snocket (LocalAddress, MakeBearer, Snocket,
                                             localAddressFromPath, localSnocket, socketSnocket,
                                             makeLocalBearer, makeSocketBearer)
-import           Ouroboros.Network.Socket (AcceptedConnectionsLimit (..),
-                                           HandshakeCallbacks (..),
-                                           SomeResponderApplication (..),
-                                           cleanNetworkMutableState, newNetworkMutableState,
-                                           nullNetworkServerTracers, withServerNode)
+import           Ouroboros.Network.Socket (SomeResponderApplication (..))
 import           Ouroboros.Network.Protocol.Handshake.Codec (noTimeLimitsHandshake,
                                                              timeLimitsHandshake)
 import           Ouroboros.Network.Protocol.Handshake.Type (Handshake)
@@ -47,6 +44,8 @@ import           Ouroboros.Network.Protocol.Handshake.Unversioned (UnversionedPr
                                                                    unversionedHandshakeCodec,
                                                                    unversionedProtocolDataCodec)
 import           Ouroboros.Network.Protocol.Handshake.Version (acceptableVersion, queryVersion, simpleSingletonVersions)
+import           Ouroboros.Network.Protocol.Handshake (HandshakeArguments (..))
+import qualified Test.Ouroboros.Network.Server as Server
 import qualified System.Metrics as EKG
 
 import qualified System.Metrics.Protocol.Acceptor as Acceptor
@@ -54,6 +53,8 @@ import qualified System.Metrics.Protocol.Codec as Acceptor
 import           System.Metrics.Store.Acceptor (MetricsLocalStore (..), storeMetrics)
 import           System.Metrics.ReqResp (Request (..), Response (..))
 import           System.Metrics.Configuration (AcceptorConfiguration (..), HowToConnect (..))
+
+type NetworkState = ()
 
 listenToForwarder
   :: AcceptorConfiguration
@@ -78,8 +79,7 @@ listenToForwarder config mkStores peerErrorHandler = withIOManager $ \iocp -> do
       doListenToForwarder snocket makeSocketBearer configureSocket address timeLimitsHandshake app
 
 doListenToForwarder
-  :: Ord addr
-  => Snocket IO fd addr
+  :: Snocket IO fd addr
   -> MakeBearer IO fd
   -> (fd -> addr -> IO ()) -- ^ configure socket
   -> addr
@@ -87,28 +87,27 @@ doListenToForwarder
   -> OuroborosApplication 'Mux.ResponderMode
                           (MinimalInitiatorContext addr)
                           (ResponderContext addr)
+                          NetworkState
                           LBS.ByteString IO Void ()
   -> IO Void
 doListenToForwarder snocket makeBearer configureSocket address timeLimits app = do
-  networkState <- newNetworkMutableState
-  _ <- async $ cleanNetworkMutableState networkState
-  withServerNode
+  Server.with
     snocket
     makeBearer
     configureSocket
-    nullNetworkServerTracers
-    networkState
-    (AcceptedConnectionsLimit maxBound maxBound 0)
     address
-    unversionedHandshakeCodec
-    timeLimits
-    unversionedProtocolDataCodec
-    (HandshakeCallbacks acceptableVersion queryVersion)
+    HandshakeArguments {
+      haHandshakeTracer = nullTracer,
+      haHandshakeCodec = unversionedHandshakeCodec,
+      haVersionDataCodec = unversionedProtocolDataCodec,
+      haAcceptVersion = acceptableVersion,
+      haQueryVersion = queryVersion,
+      haTimeLimits = timeLimits
+    }
     (simpleSingletonVersions
       UnversionedProtocol
       UnversionedProtocolData
       (SomeResponderApplication app))
-    nullErrorPolicies
     $ \_ serverAsync -> wait serverAsync -- Block until async exception.
 
 acceptorApp
@@ -118,6 +117,7 @@ acceptorApp
   -> OuroborosApplication 'Mux.ResponderMode
                           (MinimalInitiatorContext addr)
                           (ResponderContext addr)
+                          NetworkState
                           LBS.ByteString IO Void ()
 acceptorApp config mkStores peerErrorHandler =
   OuroborosApplication [
@@ -132,7 +132,7 @@ acceptEKGMetricsResp
   :: AcceptorConfiguration
   -> (responderCtx -> IO (EKG.Store, TVar MetricsLocalStore))
   -> (responderCtx -> IO ())
-  -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
+  -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx NetworkState LBS.ByteString IO Void ()
 acceptEKGMetricsResp config mkStores peerErrorHandler =
   ResponderProtocolOnly $ runPeerWithStores config mkStores peerErrorHandler
 
@@ -140,7 +140,7 @@ acceptEKGMetricsInit
   :: AcceptorConfiguration
   -> (initiatorCtx -> IO (EKG.Store, TVar MetricsLocalStore))
   -> (initiatorCtx -> IO ())
-  -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+  -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx NetworkState LBS.ByteString IO () Void
 acceptEKGMetricsInit config mkStores peerErrorHandler =
   InitiatorProtocolOnly $ runPeerWithStores config mkStores peerErrorHandler
 
