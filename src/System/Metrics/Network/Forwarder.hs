@@ -102,7 +102,7 @@ doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
     versions = simpleSingletonVersions
        UnversionedProtocol
        UnversionedProtocolData
-       app
+       (\_ -> app)
 
     localAddress  :: Maybe addr
     remoteAddress :: addr

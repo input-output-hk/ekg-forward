@@ -107,7 +107,7 @@ doListenToForwarder snocket makeBearer configureSocket address timeLimits app = 
     (simpleSingletonVersions
       UnversionedProtocol
       UnversionedProtocolData
-      (SomeResponderApplication app))
+      (\_ -> SomeResponderApplication app))
     nullErrorPolicies
     $ \_ serverAsync -> wait serverAsync -- Block until async exception.
 
