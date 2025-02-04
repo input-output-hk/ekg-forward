@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1
+
+* Updated to `ouroboros-network-framework-0.16`.
+
 ## 0.8
 
 * Updated to `network-mux-0.6` and `ouroboros-network-framework-0.15`
