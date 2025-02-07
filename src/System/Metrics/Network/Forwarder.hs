@@ -131,6 +131,7 @@ forwarderApp config ekgStore =
   OuroborosApplication
     [ MiniProtocol
         { miniProtocolNum    = MiniProtocolNum 2
+        , miniProtocolStart  = Mux.StartEagerly
         , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound }
         , miniProtocolRun    = forwardEKGMetrics config ekgStore
         }
