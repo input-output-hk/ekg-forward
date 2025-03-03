@@ -55,4 +55,6 @@ data ForwarderConfiguration = ForwarderConfiguration
     -- | Additional action that will be performed every time the forwarder will
     -- receive the request from the acceptor.
   , actionOnRequest    :: !(Request -> IO ())
+    -- | Forcibly use a dummy forwarder for metrics, i.e. when the consumer is certain they won't be needed
+  , useDummyForwarder  :: !Bool
   }

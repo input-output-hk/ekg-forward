@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9 - Mar 2025
+
+* New `Deltify` data type that selects only the delta/changes of metrics, keeping a reference to the previously transmitted sample in a back buffer.
+* Saving bandwidth: New request constructor `GetUpdatedMetrics` which asks for changed metrics only - with the initial back buffer being empty.
+* Saving bandwidth: New boolean field `useDummyForwarder` in `ForwarderConfiguration` to forcibly use a dummy forwarder, i.e. when the consumer is certain it wont require metrics at all.
+* New test case for `GetUpdatedMetrics`.
+
 ## 0.8.1
 
 * Updated to `ouroboros-network-framework-0.16`.

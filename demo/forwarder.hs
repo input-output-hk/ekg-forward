@@ -28,6 +28,7 @@ main = do
           , acceptorEndpoint   = howToConnect
           , reConnectFrequency = secondsToNominalDiffTime (read freq :: Pico)
           , actionOnRequest    = \_ -> return ()
+          , useDummyForwarder  = False
           }
 
   -- Create an empty EKG store and register predefined GC metrics in it.
