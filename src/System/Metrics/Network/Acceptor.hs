@@ -123,6 +123,7 @@ acceptorApp config mkStores peerErrorHandler =
   OuroborosApplication [
     MiniProtocol
       { miniProtocolNum    = MiniProtocolNum 2
+      , miniProtocolStart  = Mux.StartEagerly
       , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound }
       , miniProtocolRun    = acceptEKGMetricsResp config mkStores peerErrorHandler
       }
