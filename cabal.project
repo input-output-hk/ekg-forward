@@ -25,9 +25,3 @@ test-show-details: direct
 
 tests: True
 benchmarks: True
-
-if impl(ghc >= 9.6)
-  allow-newer:
-    , *:base
-    , ekg-core:*
-    , protolude:*
