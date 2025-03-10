@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                ekg-forward
-version:             0.8.1
+version:             0.8.2
 synopsis:            See README for more info
 description:         See README for more info
 homepage:            https://github.com/input-output-hk/ekg-forward
@@ -66,7 +66,7 @@ library
                        , network
                        , network-mux
                        , ouroboros-network-api
-                       , ouroboros-network-framework ^>= 0.16
+                       , ouroboros-network-framework ^>= 0.17
                        , singletons ^>= 3.0
                        , serialise
                        , stm
