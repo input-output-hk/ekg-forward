@@ -35,4 +35,5 @@ mkForwarderConfig endpoint =
     , acceptorEndpoint   = endpoint
     , reConnectFrequency = secondsToNominalDiffTime 1
     , actionOnRequest    = \_ -> return ()
+    , useDummyForwarder  = False
     }

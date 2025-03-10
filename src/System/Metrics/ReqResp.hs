@@ -33,6 +33,7 @@ instance Serialise MetricValue
 data Request
   = GetAllMetrics                      -- ^ Get all metrics from the forwarder's local store.
   | GetMetrics !(NonEmpty MetricName)  -- ^ Get specific metrics only.
+  | GetUpdatedMetrics                  -- ^ Get all metrics from the forwarder's local store that have changed since the last request.
   deriving (Eq, Generic, Show)
 
 -- | The response with the metrics.
