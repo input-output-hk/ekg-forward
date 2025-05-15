@@ -1,5 +1,9 @@
 # Changelog
 
+## next version
+
+* Updated to `ouroboros-network-framework-0.18`.
+
 ## 0.9 - Mar 2025
 
 * New `Deltify` data type that selects only the delta/changes of metrics, keeping a reference to the previously transmitted sample in a back buffer.
