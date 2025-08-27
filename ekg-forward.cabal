@@ -1,4 +1,4 @@
-cabal-version:       2.4
+cabal-version:       3.0
 name:                ekg-forward
 version:             0.9
 synopsis:            See README for more info
@@ -68,14 +68,13 @@ library
                        , network
                        , network-mux
                        , ouroboros-network-api
-                       , ouroboros-network-framework ^>= 0.17
+                       , ouroboros-network-framework ^>= 0.19
                        , singletons ^>= 3.0
                        , serialise
                        , stm
                        , text
                        , time
-                       , typed-protocols ^>= 0.3
-                       , typed-protocols-cborg
+                       , typed-protocols:{typed-protocols,cborg} ^>= 1.0
                        , unordered-containers
 
 executable demo-forwarder
