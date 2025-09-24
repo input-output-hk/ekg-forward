@@ -44,7 +44,7 @@
         cabalProject = nixpkgs.haskell-nix.cabalProject' {
           src = ./.;
           name = "ekg-forward";
-          compiler-nix-name = "ghc8107";
+          compiler-nix-name = "ghc966";
 
           # CHaP input map, so we can find CHaP packages (needs to be more
           # recent than the index-state we set!). Can be updated with
