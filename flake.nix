@@ -22,8 +22,8 @@
     supportedSystems = [
       "x86_64-linux"
       "x86_64-darwin"
-      #"aarch64-linux"
-      #"aarch64-darwin"
+      "aarch64-linux"
+      "aarch64-darwin"
     ];
   in
     inputs.flake-utils.lib.eachSystem supportedSystems (
@@ -44,7 +44,7 @@
         cabalProject = nixpkgs.haskell-nix.cabalProject' {
           src = ./.;
           name = "ekg-forward";
-          compiler-nix-name = "ghc966";
+          compiler-nix-name = "ghc967";
 
           # CHaP input map, so we can find CHaP packages (needs to be more
           # recent than the index-state we set!). Can be updated with

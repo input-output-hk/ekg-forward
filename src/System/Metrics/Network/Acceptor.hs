@@ -92,6 +92,8 @@ doListenToForwarder
 doListenToForwarder snocket makeBearer configureSocket address timeLimits app = do
   OServer.with
     snocket
+    nullTracer
+    Mux.nullTracers
     makeBearer
     configureSocket
     address
