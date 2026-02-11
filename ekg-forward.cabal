@@ -1,13 +1,13 @@
 cabal-version:       3.0
 name:                ekg-forward
-version:             1.0
+version:             1.1
 synopsis:            See README for more info
 description:         See README for more info
 homepage:            https://github.com/input-output-hk/ekg-forward
 bug-reports:         https://github.com/input-output-hk/ekg-forward/issues
 license:             Apache-2.0
 license-file:        LICENSE
-copyright:           2021-2023 Input Output Global Inc (IOG), 2023-2025 Intersect.
+copyright:           2021-2023 Input Output Global Inc (IOG), 2023-2026 Intersect.
 author:              IOHK
 maintainer:          operations@iohk.io
 category:            System, Network
@@ -64,14 +64,13 @@ library
                        , io-classes >= 1.4.1
                        , network
                        , network-mux
-                       , ouroboros-network-api
-                       , ouroboros-network-framework ^>= 0.19
+                       , ouroboros-network:{api, framework} ^>= 0.24
                        , singletons ^>= 3.0
                        , serialise
                        , stm
                        , text
                        , time
-                       , typed-protocols:{typed-protocols,cborg} ^>= 1.0
+                       , typed-protocols:{typed-protocols,cborg} ^>= 1.1
                        , unordered-containers
 
 executable demo-forwarder
