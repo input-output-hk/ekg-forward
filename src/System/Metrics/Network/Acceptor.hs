@@ -124,7 +124,8 @@ acceptorApp config mkStores peerErrorHandler =
     MiniProtocol
       { miniProtocolNum    = MiniProtocolNum 2
       , miniProtocolStart  = Mux.StartEagerly
-      , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound }
+      , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound,
+                                                  burst = Nothing }
       , miniProtocolRun    = acceptEKGMetricsResp config mkStores peerErrorHandler
       }
   ]
