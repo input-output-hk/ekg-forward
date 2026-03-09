@@ -133,7 +133,8 @@ forwarderApp config ekgStore =
     [ MiniProtocol
         { miniProtocolNum    = MiniProtocolNum 2
         , miniProtocolStart  = Mux.StartEagerly
-        , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound }
+        , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound,
+                                                    burst = Nothing }
         , miniProtocolRun    = if useDummyForwarder config then forwardEKGMetricsDummy else forwardEKGMetrics config ekgStore
         }
     ]
