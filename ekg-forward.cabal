@@ -64,7 +64,7 @@ library
                        , io-classes >= 1.4.1
                        , network
                        , network-mux
-                       , ouroboros-network:{api, framework} ^>= 0.24
+                       , ouroboros-network:{api, framework} ^>= 1.0
                        , singletons ^>= 3.0
                        , serialise
                        , stm

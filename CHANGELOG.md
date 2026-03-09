@@ -1,9 +1,9 @@
 # Changelog
 
-## 1.1 - Feb 2026
+## 1.1 - Mar 2026
 
 * Updated to `typed-protocols-1.2`.
-* Updated to `ouroboros-network-0.24`.
+* Updated to `ouroboros-network-1.0`.
 
 ## 1.0 - Sep 2025
 
