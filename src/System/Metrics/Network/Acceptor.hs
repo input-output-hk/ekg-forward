@@ -6,6 +6,8 @@ module System.Metrics.Network.Acceptor
   -- | Export this function for Mux purpose.
   , acceptEKGMetricsInit
   , acceptEKGMetricsResp
+  , acceptMetricsInit
+  , acceptMetricsResp
   ) where
 
 import           Codec.CBOR.Term (Term)
@@ -13,7 +15,7 @@ import qualified Codec.Serialise as CBOR
 import           Control.Exception (finally)
 import           Control.Concurrent (threadDelay)
 import           Control.Concurrent.Async (wait)
-import           Control.Concurrent.STM.TVar (readTVarIO)
+import           Control.Concurrent.STM.TVar (TVar, readTVarIO)
 import           Control.Tracer (nullTracer)
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
@@ -52,6 +54,8 @@ import qualified System.Metrics.Protocol.Acceptor as Acceptor
 import qualified System.Metrics.Protocol.Codec as Acceptor
 import           System.Metrics.ReqResp (Request (..), Response (..))
 import           System.Metrics.Configuration (AcceptorConfiguration (..), HowToConnect (..))
+import qualified System.Metrics as EKG
+import System.Metrics.Store.Acceptor (MetricsLocalStore, storeMetrics)
 
 listenToForwarder
   :: AcceptorConfiguration
@@ -123,29 +127,47 @@ acceptorApp config mkStore insertStore peerErrorHandler =
       { miniProtocolNum    = MiniProtocolNum 2
       , miniProtocolStart  = Mux.StartEagerly
       , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound }
-      , miniProtocolRun    = acceptEKGMetricsResp config mkStore insertStore peerErrorHandler
+      , miniProtocolRun    = acceptMetricsResp config mkStore insertStore peerErrorHandler
       }
   ]
 
--- COMMENT: Remove 'EKG' from the name?
-acceptEKGMetricsResp
+acceptMetricsResp
   :: AcceptorConfiguration
   -> (responderCtx -> IO store)
   -> (responderCtx -> store -> Response -> IO ())
   -> (responderCtx -> IO ())
   -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
-acceptEKGMetricsResp config mkStore insertStore peerErrorHandler =
+acceptMetricsResp config mkStore insertStore peerErrorHandler =
   ResponderProtocolOnly $ runPeerWithStores config mkStore insertStore peerErrorHandler
 
--- COMMENT: Remove 'EKG' from the name?
-acceptEKGMetricsInit
+acceptMetricsInit
   :: AcceptorConfiguration
   -> (initiatorCtx -> IO store)
   -> (initiatorCtx -> store -> Response -> IO ())
   -> (initiatorCtx -> IO ())
   -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
-acceptEKGMetricsInit config mkStore insertStore peerErrorHandler =
+acceptMetricsInit config mkStore insertStore peerErrorHandler =
   InitiatorProtocolOnly $ runPeerWithStores config mkStore insertStore peerErrorHandler
+
+{-# INLINE acceptEKGMetricsResp #-}
+acceptEKGMetricsResp
+  :: AcceptorConfiguration
+  -> (responderCtx -> IO (EKG.Store, TVar MetricsLocalStore))
+  -> (responderCtx -> IO ())
+  -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
+acceptEKGMetricsResp config mkStore =
+  acceptMetricsResp config mkStore insertStore where
+    insertStore _ (a, b) resp = storeMetrics resp a b
+
+{-# INLINE acceptEKGMetricsInit #-}
+acceptEKGMetricsInit
+  :: AcceptorConfiguration
+  -> (initiatorCtx -> IO (EKG.Store, TVar MetricsLocalStore))
+  -> (initiatorCtx -> IO ())
+  -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+acceptEKGMetricsInit config mkStore =
+  acceptMetricsInit config mkStore insertStore where
+    insertStore _ (a, b) resp = storeMetrics resp a b
 
 runPeerWithStores
   :: AcceptorConfiguration
