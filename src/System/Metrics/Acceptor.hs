@@ -13,7 +13,7 @@ import           Control.Monad (void)
 import qualified System.Metrics as EKG
 
 import           System.Metrics.Network.Acceptor (listenToForwarder)
-import           System.Metrics.Store.Acceptor (emptyMetricsLocalStore)
+import           System.Metrics.Store.Acceptor (emptyMetricsLocalStore, storeMetrics)
 import           System.Metrics.Configuration (AcceptorConfiguration (..))
 
 runEKGAcceptor
@@ -21,12 +21,14 @@ runEKGAcceptor
   -> EKG.Store              -- ^ The store all received metrics will be stored in.
   -> IO ()
 runEKGAcceptor config ekgStore =
-  try (void $ listenToForwarder config mkStores peerErrorHandler) >>= \case
+  try (void $ listenToForwarder config mkStores insertStores peerErrorHandler) >>= \case
     Left (_e :: SomeException) -> runEKGAcceptor config ekgStore
     Right _ -> return ()
  where
   mkStores _ = do
     metricsStore <- newTVarIO emptyMetricsLocalStore
     return (ekgStore, metricsStore)
+
+  insertStores _ (a, b) resp = storeMetrics resp a b
 
   peerErrorHandler _ = return ()

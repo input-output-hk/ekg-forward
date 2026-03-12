@@ -6,6 +6,8 @@ module System.Metrics.Network.Acceptor
   -- | Export this function for Mux purpose.
   , acceptEKGMetricsInit
   , acceptEKGMetricsResp
+  , acceptMetricsInit
+  , acceptMetricsResp
   ) where
 
 import           Codec.CBOR.Term (Term)
@@ -48,30 +50,30 @@ import           Ouroboros.Network.Protocol.Handshake.Unversioned (UnversionedPr
                                                                    unversionedProtocolDataCodec)
 import           Ouroboros.Network.Protocol.Limits (ProtocolTimeLimits)
 
-import qualified System.Metrics as EKG
-
 import qualified System.Metrics.Protocol.Acceptor as Acceptor
 import qualified System.Metrics.Protocol.Codec as Acceptor
-import           System.Metrics.Store.Acceptor (MetricsLocalStore (..), storeMetrics)
 import           System.Metrics.ReqResp (Request (..), Response (..))
 import           System.Metrics.Configuration (AcceptorConfiguration (..), HowToConnect (..))
+import qualified System.Metrics as EKG
+import System.Metrics.Store.Acceptor (MetricsLocalStore, storeMetrics)
 
 listenToForwarder
   :: AcceptorConfiguration
-  -> (ResponderContext (Either LocalAddress Socket.SockAddr) -> IO (EKG.Store, TVar MetricsLocalStore))
+  -> (ResponderContext (Either LocalAddress Socket.SockAddr) -> IO store)
+  -> (ResponderContext (Either LocalAddress Socket.SockAddr) -> store -> Response -> IO ())
   -> (ResponderContext (Either LocalAddress Socket.SockAddr) -> IO ())
   -> IO Void
-listenToForwarder config mkStores peerErrorHandler = withIOManager $ \iocp -> do
+listenToForwarder config mkStore insertStore peerErrorHandler = withIOManager $ \iocp -> do
   case forwarderEndpoint config of
     LocalPipe localPipe -> do
-      let app = acceptorApp config (mkStores . fmap Left) (peerErrorHandler . fmap Left)
+      let app = acceptorApp config (mkStore . fmap Left) (insertStore . fmap Left) (peerErrorHandler . fmap Left)
           snocket = localSnocket iocp
           address = localAddressFromPath localPipe
           configureSocket = mempty
       doListenToForwarder snocket makeLocalBearer configureSocket address noTimeLimitsHandshake app
     RemoteSocket host port -> do
       listenAddress:_ <- Socket.getAddrInfo Nothing (Just $ T.unpack host) (Just $ show port)
-      let app = acceptorApp config (mkStores . fmap Right) (peerErrorHandler . fmap Right)
+      let app = acceptorApp config (mkStore . fmap Right) (insertStore . fmap Right) (peerErrorHandler . fmap Right)
           snocket = socketSnocket iocp
           address = Socket.addrAddress listenAddress
           configureSocket fd _addr =
@@ -114,71 +116,94 @@ doListenToForwarder snocket makeBearer configureSocket address timeLimits app = 
 
 acceptorApp
   :: AcceptorConfiguration
-  -> (ResponderContext addr -> IO (EKG.Store, TVar MetricsLocalStore))
+  -> (ResponderContext addr -> IO store)
+  -> (ResponderContext addr -> store -> Response -> IO ())
   -> (ResponderContext addr -> IO ())
   -> OuroborosApplication 'Mux.ResponderMode
                           (MinimalInitiatorContext addr)
                           (ResponderContext addr)
                           LBS.ByteString IO Void ()
-acceptorApp config mkStores peerErrorHandler =
+acceptorApp config mkStore insertStore peerErrorHandler =
   OuroborosApplication [
     MiniProtocol
       { miniProtocolNum    = MiniProtocolNum 2
       , miniProtocolStart  = Mux.StartEagerly
       , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound }
-      , miniProtocolRun    = acceptEKGMetricsResp config mkStores peerErrorHandler
+      , miniProtocolRun    = acceptMetricsResp config mkStore insertStore peerErrorHandler
       }
   ]
 
+acceptMetricsResp
+  :: AcceptorConfiguration
+  -> (responderCtx -> IO store)
+  -> (responderCtx -> store -> Response -> IO ())
+  -> (responderCtx -> IO ())
+  -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
+acceptMetricsResp config mkStore insertStore peerErrorHandler =
+  ResponderProtocolOnly $ runPeerWithStores config mkStore insertStore peerErrorHandler
+
+acceptMetricsInit
+  :: AcceptorConfiguration
+  -> (initiatorCtx -> IO store)
+  -> (initiatorCtx -> store -> Response -> IO ())
+  -> (initiatorCtx -> IO ())
+  -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
+acceptMetricsInit config mkStore insertStore peerErrorHandler =
+  InitiatorProtocolOnly $ runPeerWithStores config mkStore insertStore peerErrorHandler
+
+{-# INLINE acceptEKGMetricsResp #-}
 acceptEKGMetricsResp
   :: AcceptorConfiguration
   -> (responderCtx -> IO (EKG.Store, TVar MetricsLocalStore))
   -> (responderCtx -> IO ())
   -> RunMiniProtocol 'Mux.ResponderMode initiatorCtx responderCtx LBS.ByteString IO Void ()
-acceptEKGMetricsResp config mkStores peerErrorHandler =
-  ResponderProtocolOnly $ runPeerWithStores config mkStores peerErrorHandler
+acceptEKGMetricsResp config mkStore =
+  acceptMetricsResp config mkStore insertStore where
+    insertStore _ (a, b) resp = storeMetrics resp a b
 
+{-# INLINE acceptEKGMetricsInit #-}
 acceptEKGMetricsInit
   :: AcceptorConfiguration
   -> (initiatorCtx -> IO (EKG.Store, TVar MetricsLocalStore))
   -> (initiatorCtx -> IO ())
   -> RunMiniProtocol 'Mux.InitiatorMode initiatorCtx responderCtx LBS.ByteString IO () Void
-acceptEKGMetricsInit config mkStores peerErrorHandler =
-  InitiatorProtocolOnly $ runPeerWithStores config mkStores peerErrorHandler
+acceptEKGMetricsInit config mkStore =
+  acceptMetricsInit config mkStore insertStore where
+    insertStore _ (a, b) resp = storeMetrics resp a b
 
 runPeerWithStores
   :: AcceptorConfiguration
-  -> (ctx -> IO (EKG.Store, TVar MetricsLocalStore))
+  -> (ctx -> IO store)
+  -> (ctx -> store -> Response -> IO ())
   -> (ctx -> IO ())
   -> MiniProtocolCb ctx LBS.ByteString IO ()
-runPeerWithStores config mkStores peerErrorHandler =
+runPeerWithStores config mkStore insertStore peerErrorHandler =
   MiniProtocolCb $ \ctx channel -> do
-    (ekgStore, metricsStore) <- mkStores ctx
+    st <- mkStore ctx
     runPeer
       (acceptorTracer config)
       (Acceptor.codecEKGForward CBOR.encode CBOR.decode
                                 CBOR.encode CBOR.decode)
       channel
-      (Acceptor.ekgAcceptorPeer $ acceptorActions True config ekgStore metricsStore)
+      (Acceptor.ekgAcceptorPeer $ acceptorActions True config (insertStore ctx st))
     `finally` peerErrorHandler ctx
 
 acceptorActions
   :: Bool
   -> AcceptorConfiguration
-  -> EKG.Store
-  -> TVar MetricsLocalStore
+  -> (Response -> IO ())
   -> Acceptor.EKGAcceptor Request Response IO ()
-acceptorActions True config@AcceptorConfiguration{..} ekgStore metricsStore =
+acceptorActions True config@AcceptorConfiguration{..} insertStore =
   Acceptor.SendMsgReq whatToRequest $ \response -> do
-    storeMetrics response ekgStore metricsStore
+    insertStore response
     threadDelay $ toMicroSecs requestFrequency
     weAreDone <- readTVarIO shouldWeStop
     if weAreDone
-      then return $ acceptorActions False config ekgStore metricsStore
-      else return $ acceptorActions True  config ekgStore metricsStore
+      then return $ acceptorActions False config insertStore
+      else return $ acceptorActions True  config insertStore
  where
   toMicroSecs :: NominalDiffTime -> Int
   toMicroSecs dt = fromEnum dt `div` 1000000
 
-acceptorActions False _ _ _ =
+acceptorActions False _ _ =
   Acceptor.SendMsgDone $ return ()
