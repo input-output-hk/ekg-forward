@@ -3,6 +3,7 @@
 ## 1.2 - Mar 2026
 
 * Generalised metrics acceptor to work with an arbitrary store.
+* Updated to `ouroboros-network-1.1`.
 
 ## 1.1 - Mar 2026
 
