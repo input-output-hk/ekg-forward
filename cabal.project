@@ -17,7 +17,7 @@ repository cardano-haskell-packages
 
 index-state:
   , hackage.haskell.org 2026-02-06T18:13:59Z
-  , cardano-haskell-packages 2026-03-07T10:30:57Z
+  , cardano-haskell-packages 2026-03-13T16:01:53Z
 
 packages: ./.
 
