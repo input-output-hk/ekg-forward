@@ -136,6 +136,7 @@ forwarderApp config ekgStore =
         , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound,
                                                     burst = Nothing }
         , miniProtocolRun    = if useDummyForwarder config then forwardEKGMetricsDummy else forwardEKGMetrics config ekgStore
+        , miniProtocolWeight = 1
         }
     ]
 

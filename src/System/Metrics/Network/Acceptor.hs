@@ -127,6 +127,7 @@ acceptorApp config mkStores peerErrorHandler =
       , miniProtocolLimits = MiniProtocolLimits { maximumIngressQueue = maxBound,
                                                   burst = Nothing }
       , miniProtocolRun    = acceptEKGMetricsResp config mkStores peerErrorHandler
+      , miniProtocolWeight = 1
       }
   ]
 
