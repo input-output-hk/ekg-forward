@@ -25,3 +25,11 @@ test-show-details: direct
 
 tests: True
 benchmarks: True
+
+source-repository-package
+  type: git
+  location: https://github.com/IntersectMBO/ouroboros-network.git
+  tag: 0efa15d3371b69c77aceeb969d4a4288557b7164
+  subdir:
+    network-mux
+    ouroboros-network
