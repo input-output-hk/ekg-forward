@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3 - Jul 2026
+
+* Updated to `ouroboros-network-1.2`.
+
 ## 1.2 - Mar 2026
 
 * Generalised metrics acceptor to work with an arbitrary store.

@@ -84,16 +84,16 @@ doConnectToAcceptor
 doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
 
   let
-    connectToArgs :: ConnectToArgs fd addr UnversionedProtocol UnversionedProtocolData
+    connectToArgs :: ConnectToArgs IO fd addr UnversionedProtocol UnversionedProtocolData
     connectToArgs = ConnectToArgs
       { ctaHandshakeCodec = unversionedHandshakeCodec
      :: Codec (Handshake UnversionedProtocol Term) CBOR.DeserialiseFailure IO LBS.ByteString
       , ctaHandshakeTimeLimits = timeLimits
      :: ProtocolTimeLimits (Handshake UnversionedProtocol Term)
       , ctaVersionDataCodec = unversionedProtocolDataCodec
-     :: VersionDataCodec Term UnversionedProtocol UnversionedProtocolData
+     :: VersionDataCodec UnversionedProtocol UnversionedProtocolData
       , ctaConnectTracers = nullNetworkConnectTracers
-     :: NetworkConnectTracers addr UnversionedProtocol
+     :: NetworkConnectTracers IO addr UnversionedProtocol
       , ctaHandshakeCallbacks = HandshakeCallbacks acceptableVersion queryVersion
      :: HandshakeCallbacks UnversionedProtocolData
       }
