@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4 - Unreleased
+
+* Update the `ouroboros-network` API/framework dependency bounds to 1.3.
+
 ## 1.3 - Jul 2026
 
 * Updated to `ouroboros-network-1.2`.
