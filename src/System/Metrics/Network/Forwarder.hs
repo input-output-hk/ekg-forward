@@ -23,6 +23,7 @@ import qualified Network.Mux as Mux
 import qualified Network.Socket as Socket
 import           Network.TypedProtocol.Codec
 import           Control.Exception (throwIO)
+import           Ouroboros.Network.ConnectionManager.Types (DataFlow (Unidirectional))
 import           Ouroboros.Network.Context (MinimalInitiatorContext, ResponderContext)
 import           Ouroboros.Network.Driver.Simple (runPeer)
 import           Ouroboros.Network.Driver.Limits (ProtocolTimeLimits)
@@ -116,6 +117,7 @@ doConnectToAcceptor snocket makeBearer configureSocket address timeLimits app =
       connectToArgs
       configureSocket
       versions
+      (const Unidirectional)
       localAddress
       remoteAddress
 
