@@ -23,6 +23,7 @@ import           Data.Time.Clock (NominalDiffTime)
 import           Data.Void (Void)
 import qualified Network.Mux as Mux
 import qualified Network.Socket as Socket
+import           Ouroboros.Network.ConnectionManager.Types (DataFlow (Unidirectional))
 import           Ouroboros.Network.Context (MinimalInitiatorContext, ResponderContext)
 import           Ouroboros.Network.IOManager (withIOManager)
 import           Ouroboros.Network.Driver.Simple (runPeer)
@@ -112,6 +113,7 @@ doListenToForwarder snocket makeBearer configureSocket address timeLimits app = 
       UnversionedProtocol
       UnversionedProtocolData
       (\_ -> SomeResponderApplication app))
+    (const Unidirectional)
     $ \_ serverAsync -> wait serverAsync -- Block until async exception.
 
 acceptorApp
